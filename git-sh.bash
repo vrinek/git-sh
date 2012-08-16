@@ -177,17 +177,20 @@ _git_import_aliases () {
 
 # PROMPT =======================================================================
 
-PS1='`_git_headname`!`_git_workdir``_git_dirty`> '
+gitsign=$(echo -e "\u2213\u2213\u2213")
+PS1='`echo $gitsign` `_git_workdir` | `_git_headname` > '
 
 ANSI_RESET="\001$(git config --get-color "" "reset")\002"
 
 # detect whether the tree is in a dirty state. returns
 _git_dirty() {
 	if git status 2>/dev/null | fgrep -q '(working directory clean)'; then
-		return 0
+		local dirty_marker="`git config gitsh.clean || echo -e "\u2713"`"
+		_git_apply_color "$dirty_marker" "color.sh.dirty" "green"
+	else
+		local dirty_marker="`git config gitsh.dirty || echo -e "\u2717"`"
+		_git_apply_color "$dirty_marker" "color.sh.dirty" "red"
 	fi
-	local dirty_marker="`git config gitsh.dirty || echo ' *'`"
-	_git_apply_color "$dirty_marker" "color.sh.dirty" "red"
 }
 
 # detect the current branch; use 7-sha when not on branch
@@ -196,7 +199,7 @@ _git_headname() {
 	[ -n "$br" ] &&
 		br=${br#refs/heads/} ||
 		br=`git rev-parse --short HEAD 2>/dev/null`
-	_git_apply_color "$br" "color.sh.branch" "yellow reverse"
+	_git_apply_color "$br `_git_dirty`" "color.sh.branch" "yellow"
 }
 
 # detect working directory relative to working tree root
